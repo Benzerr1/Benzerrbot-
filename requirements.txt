@@ -3,3 +3,4 @@ requests
 schedule
 pandas
 numpy
+imghdr-py==0.4.0
