@@ -1,4 +1,9 @@
-import logging
+import mimetypes, sys
+import types
+
+if sys.version_info >= (3, 13):
+    # Patch for imghdr removal in Python 3.13+
+    sys.modules['imghdr'] = types.SimpleNamespace(what=lambda filename: mimetypes.guess_type(filenammport import logging
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 
