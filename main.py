@@ -1,18 +1,13 @@
-import mimetypes, sys, types, logging
+import mimetypes
+import sys
+import types
+import logging
 
 # Patch for Python 3.13+ removal of imghdr
 if sys.version_info >= (3, 13):
     sys.modules['imghdr'] = types.SimpleNamespace(
         what=lambda filename: mimetypes.guess_type(filename)[0]
     )
-import types
-
-if sys.version_info >= (3, 13):
-    # Patch for imghdr removal in Python 3.13+
-    sys.modules['imghdr'] = types.SimpleNamespace(what=lambda filename: mimetypes.guess_type(filenammport import logging
-from telegram import Update
-from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
-
 BOT_TOKEN = "YOUR_BOT_TOKEN_HERE"  # replace this with your actual bot token
 
 logging.basicConfig(format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
