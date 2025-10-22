@@ -10,7 +10,7 @@ if sys.version_info >= (3, 13):
     )
 
 from telegram import Update
-from telegram.ext import ContextTypes
+from telegram.ext import CallbackContext
 from telegram.ext import ContextTypes
 BOT_TOKEN = "YOUR_BOT_TOKEN_HERE"  # replace this with your actual bot token
 
