@@ -1,4 +1,10 @@
-import mimetypes, sys
+import mimetypes, sys, types, logging
+
+# Patch for Python 3.13+ removal of imghdr
+if sys.version_info >= (3, 13):
+    sys.modules['imghdr'] = types.SimpleNamespace(
+        what=lambda filename: mimetypes.guess_type(filename)[0]
+    )
 import types
 
 if sys.version_info >= (3, 13):
