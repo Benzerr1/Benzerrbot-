@@ -3,3 +3,4 @@ requests
 schedule
 pandas
 numpy
+urllib3==1.26.16
