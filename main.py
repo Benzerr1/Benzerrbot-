@@ -1,7 +1,6 @@
-asyncmetypes
-import sys
-import types
-import logging
+import mimetypes, sys, types, logging
+from telegram import Update
+from telegram.ext import Updater, CommandHandler, CallbackContext
 
 # Patch for Python 3.13+ removal of imghdr
 if sys.version_info >= (3, 13):
@@ -19,7 +18,6 @@ logging.basicConfig(format="%(asctime)s - %(name)s - %(levelname)s - %(message)s
 
 def start(update: Update, context: CallbackContext):
     update.message.reply_text("Hello! I’m Benzerrballer — your football insight bot ⚽🤖")
-app = ApplicationBuilder().token(BOT_TOKEN).build()
 app.add_handler(CommandHandler("start", start))
 
 print("Bot is running...")
