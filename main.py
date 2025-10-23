@@ -10,7 +10,7 @@ if sys.version_info >= (3, 13):
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 
-BOT_TOKEN = "8422123429:AAGAgqSjCVxH0G9ttefJBigzG8FsxqZIT30"  # your bot token
+BOT_TOKEN = "8422123429:AAHhgmzCBEPFezLBICovDLW4TpDVo0wke74"  # your bot token
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
