@@ -1,41 +1,73 @@
 import logging
+import requests
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
-import os
-import threading
-import time
-from http.server import SimpleHTTPRequestHandler, HTTPServer
 
-# 🔹 Replace with your actual bot token
-BOT_TOKEN = "8422123429:AAHhgmzCBEPFezLBICovDLW4TpDVo0wke74"
+# === Replace these with your keys ===
+TELEGRAM_BOT_TOKEN = "8422123429:AAHhgmzCBEPFezLBICovDLW4TpDVo0wke74"
+API_FOOTBALL_KEY = "9f29e5b7bamsh94c856f9545626cp1b01b6jsna90412146954"
 
+# === Set up logging ===
 logging.basicConfig(
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    level=logging.INFO
 )
-logger = logging.getLogger(__name__)
 
-# --- Telegram bot handler ---
+# === Football prediction logic ===
+def get_match_predictions():
+    url = "https://api-football-v1.p.rapidapi.com/v3/fixtures"
+    querystring = {"next": "5"}  # Next 5 matches
+    headers = {
+        "x-rapidapi-host": "api-football-v1.p.rapidapi.com",
+        "x-rapidapi-key": API_FOOTBALL_KEY
+    }
+
+    try:
+        response = requests.get(url, headers=headers, params=querystring)
+        data = response.json()
+
+        matches = data.get("response", [])
+        if not matches:
+            return "No upcoming matches found."
+
+        predictions = []
+        for match in matches:
+            teams = match["teams"]
+            home = teams["home"]["name"]
+            away = teams["away"]["name"]
+
+            # Simple prediction logic (you can make this smarter later)
+            if "city" in home.lower() or "united" in home.lower():
+                prediction = f"{home} might win vs {away}"
+            else:
+                prediction = f"{away} might surprise {home}"
+
+            predictions.append(prediction)
+
+        return "\n".join(predictions)
+
+    except Exception as e:
+        logging.error(f"Error fetching matches: {e}")
+        return "⚠️ Could not fetch match data. Try again later."
+
+# === Telegram Bot Commands ===
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("👋 Hello! Your bot is alive and running on Render!")
+    await update.message.reply_text("⚽ Welcome to Benzerr Football Predictor! Type /predict to get upcoming match tips.")
 
-# --- Fake web server to keep Render alive ---
-def run_fake_server():
-    port = int(os.environ.get("PORT", 10000))  # Default port 10000
-    server = HTTPServer(("0.0.0.0", port), SimpleHTTPRequestHandler)
-    print(f"🌐 Fake web server running on port {port} to keep Render alive.")
-    server.serve_forever()
+async def predict(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("🔍 Fetching predictions, please wait...")
+    predictions = get_match_predictions()
+    await update.message.reply_text(predictions)
 
-# --- Start web server in a thread ---
-threading.Thread(target=run_fake_server, daemon=True).start()
-
-# --- Run Telegram bot on main thread ---
+# === Main Bot Runner ===
 def main():
-    app = ApplicationBuilder().token(BOT_TOKEN).build()
+    app = ApplicationBuilder().token(TELEGRAM_BOT_TOKEN).build()
+
     app.add_handler(CommandHandler("start", start))
-    print("✅ Bot is running on Render (Free plan)...")
+    app.add_handler(CommandHandler("predict", predict))
+
+    logging.info("✅ Bot is running...")
     app.run_polling()
 
 if __name__ == "__main__":
     main()
-    while True:
-        time.sleep(60)
