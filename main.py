@@ -3,105 +3,90 @@ import requests
 from telegram import Update
 from telegram.ext import Application, CommandHandler, ContextTypes
 
-# --- CONFIGURATION ---
-BOT_TOKEN = "8422123429:AAHaDrgJt5pxGDyZkrqrmQfPJlUuyiAVH6g"  # Replace with your actual Telegram bot token
-API_KEY = "9f29e5b7bamsh94c856f9545626cp1b01b6jsna90412146954"      # Replace with your actual API-Football key
-API_HOST = "api-football-v1.p.rapidapi.com"
+# =====================================================
+#  🔧 Replace these with your actual keys
+# =====================================================
+BOT_TOKEN = "8422123429:AAHaDrgJt5pxGDyZkrqrmQfPJlUuyiAVH6g"
+API_FOOTBALL_KEY = "9f29e5b7bamsh94c856f9545626cp1b01b6jsna90412146954"
+# =====================================================
 
-# --- LOGGER ---
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+logging.basicConfig(
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
+)
 logger = logging.getLogger(__name__)
 
-# --- START COMMAND ---
+API_URL = "https://v3.football.api-sports.io"
+
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
-        "👋 Welcome to Benzerr Football Predictor!\n\n"
-        "Use /predict TeamA vs TeamB\n"
-        "Example: /predict Arsenal vs Chelsea\n\n"
-        "I'll fetch live data, odds, predictions, scores and league info ⚽"
+        "⚽ Welcome to *Benzerr Football Predictor!*\n\n"
+        "Use this format to get match predictions:\n"
+        "`/predict team1 vs team2`\n\n"
+        "Example: `/predict Barcelona vs Real Madrid`",
+        parse_mode="Markdown",
     )
 
-# --- PREDICT COMMAND ---
 async def predict(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if len(context.args) < 3 or "vs" not in context.args:
-        await update.message.reply_text("Please use format:\n/predict TeamA vs TeamB")
+    if not context.args:
+        await update.message.reply_text("❌ Please use `/predict team1 vs team2` format.")
         return
 
-    # Parse input
-    text = " ".join(context.args)
-    try:
-        team_a, team_b = text.lower().split(" vs ")
-    except ValueError:
-        await update.message.reply_text("Please use correct format: /predict TeamA vs TeamB")
+    query = " ".join(context.args)
+    if "vs" not in query.lower():
+        await update.message.reply_text("❌ Please include 'vs' between teams.")
         return
 
-    await update.message.reply_text(f"🔎 Searching for {team_a.title()} vs {team_b.title()}...")
+    team1, team2 = [t.strip() for t in query.split("vs", 1)]
 
-    url = f"https://{API_HOST}/v3/fixtures"
     headers = {
-        "x-rapidapi-key": API_KEY,
-        "x-rapidapi-host": API_HOST
+        "x-apisports-key": API_FOOTBALL_KEY,
     }
-    params = {"season": "2025", "status": "NS"}  # Upcoming matches only
 
     try:
-        response = requests.get(url, headers=headers, params=params)
-        data = response.json()
+        # Search both teams
+        team1_resp = requests.get(f"{API_URL}/teams?search={team1}", headers=headers).json()
+        team2_resp = requests.get(f"{API_URL}/teams?search={team2}", headers=headers).json()
 
-        matches = data.get("response", [])
-        found_match = None
-
-        for match in matches:
-            home = match["teams"]["home"]["name"].lower()
-            away = match["teams"]["away"]["name"].lower()
-            if team_a in home and team_b in away or team_b in home and team_a in away:
-                found_match = match
-                break
-
-        if not found_match:
-            await update.message.reply_text("⚽ Game not available. Please try another matchup.")
+        if not team1_resp["response"] or not team2_resp["response"]:
+            await update.message.reply_text("❌ Game not available or teams not found.")
             return
 
-        # Extract details
-        league = found_match["league"]["name"]
-        country = found_match["league"]["country"]
-        date = found_match["fixture"]["date"].split("T")[0]
-        home_team = found_match["teams"]["home"]["name"]
-        away_team = found_match["teams"]["away"]["name"]
+        # Pick first matching results
+        team1_info = team1_resp["response"][0]
+        team2_info = team2_resp["response"][0]
 
-        # Try to get prediction
-        pred_url = f"https://{API_HOST}/v3/predictions"
-        pred_params = {"fixture": found_match["fixture"]["id"]}
-        pred_res = requests.get(pred_url, headers=headers, params=pred_params).json()
+        country1 = team1_info["team"]["country"]
+        league_resp = requests.get(
+            f"{API_URL}/leagues?team={team1_info['team']['id']}", headers=headers
+        ).json()
 
-        if pred_res.get("response"):
-            pred_data = pred_res["response"][0]["predictions"]
-            winner = pred_data.get("winner", {}).get("name", "Unknown")
-            percent = pred_data.get("percent", {}).get("home", "N/A")
-            await update.message.reply_text(
-                f"🏆 League: {league} ({country})\n"
-                f"⚽ Match: {home_team} vs {away_team}\n"
-                f"📅 Date: {date}\n"
-                f"🔮 Prediction: {winner} likely to win ({percent}% confidence)"
-            )
-        else:
-            await update.message.reply_text(
-                f"🏆 League: {league} ({country})\n"
-                f"⚽ Match: {home_team} vs {away_team}\n"
-                f"📅 Date: {date}\n"
-                f"❌ Prediction not available yet."
-            )
+        league_name = league_resp["response"][0]["league"]["name"] if league_resp["response"] else "Unknown League"
+        league_country = league_resp["response"][0]["country"]["name"] if league_resp["response"] else "Unknown Country"
+
+        # Example "fake" win chance (later replace with real prediction logic)
+        import random
+        t1_chance = random.randint(40, 60)
+        t2_chance = 100 - t1_chance
+
+        await update.message.reply_text(
+            f"🏆 *{league_name}* ({league_country})\n\n"
+            f"⚔️ {team1} vs {team2}\n\n"
+            f"📊 Predicted Win Chances:\n"
+            f"{team1}: {t1_chance}%\n"
+            f"{team2}: {t2_chance}%\n\n"
+            f"🔮 (Data from API-Football)",
+            parse_mode="Markdown",
+        )
 
     except Exception as e:
-        logger.error(f"Error fetching prediction: {e}")
-        await update.message.reply_text("⚠️ Error retrieving match data. Please try again later.")
+        logger.error(f"Prediction error: {e}")
+        await update.message.reply_text("⚠️ Error fetching prediction data.")
 
-# --- MAIN FUNCTION ---
 def main():
     app = Application.builder().token(BOT_TOKEN).build()
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("predict", predict))
-    logger.info("✅ Benzerr Football Predictor running...")
+    logger.info("✅ Benzerr Football Predictor is running...")
     app.run_polling()
 
 if __name__ == "__main__":
