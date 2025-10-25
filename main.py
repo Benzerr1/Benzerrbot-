@@ -4,7 +4,7 @@ from telegram import Update
 from telegram.ext import Application, CommandHandler, ContextTypes
 
 # --- CONFIGURATION ---
-BOT_TOKEN = "8422123429:AAHhgmzCBEPFezLBICovDLW4TpDVo0wwith"  # Replace with your actual Telegram bot token
+BOT_TOKEN = "8422123429:AAHaDrgJt5pxGDyZkrqrmQfPJlUuyiAVH6g"  # Replace with your actual Telegram bot token
 API_KEY = "9f29e5b7bamsh94c856f9545626cp1b01b6jsna90412146954"      # Replace with your actual API-Football key
 API_HOST = "api-football-v1.p.rapidapi.com"
 
